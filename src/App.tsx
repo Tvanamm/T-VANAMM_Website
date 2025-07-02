@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { AuthProvider } from '@/contexts/AuthContext';
 import { FranchiseCartProvider } from '@/contexts/FranchiseCartContext';
+import SitemapGenerator from '@/components/seo/sitemapGenerator';
 import Index from '@/pages/Index';
 import LoginPage from '@/pages/Login';
 import SignupPage from '@/pages/Signup';
@@ -28,6 +29,7 @@ function App() {
         <FranchiseCartProvider>
           <Router>
             <div className="min-h-screen bg-background">
+              <SitemapGenerator />
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/login" element={<LoginPage />} />

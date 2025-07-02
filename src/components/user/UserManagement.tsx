@@ -77,7 +77,7 @@ const UserManagement = () => {
     try {
       const { error } = await supabase
         .from('profiles')
-        .update({ role: newRole })
+        .update({ role: newRole as 'customer' | 'franchise' | 'admin' | 'owner' })
         .eq('id', userId);
 
       if (error) throw error;
