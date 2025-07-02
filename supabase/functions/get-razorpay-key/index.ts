@@ -1,48 +1,41 @@
-
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+// supabase/functions/get-razorpay-key/index.ts
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+  "Access-Control-Allow-Origin":  "*",
+  "Access-Control-Allow-Headers": "*",          // allow any header
+  "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+};
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+  // 1) CORS preflight
+  if (req.method === "OPTIONS") {
+    return new Response(null, { status: 204, headers: corsHeaders });
   }
 
+  // 2) Actual handler
   try {
-    const razorpayKeyId = Deno.env.get('RAZORPAY_KEY_ID')
-    
+    const razorpayKeyId = Deno.env.get("RAZORPAY_KEY_ID");
     if (!razorpayKeyId) {
-      console.error('RAZORPAY_KEY_ID not found in environment variables')
-      throw new Error('Razorpay key not configured')
+      console.error("RAZORPAY_KEY_ID not set");
+      throw new Error("Razorpay key not configured");
     }
 
-    console.log('Razorpay key fetched successfully')
-
     return new Response(
-      JSON.stringify({ 
-        key: razorpayKeyId,
-        success: true 
-      }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200 
+      JSON.stringify({ key: razorpayKeyId, success: true }),
+      {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       }
-    )
-
-  } catch (error) {
-    console.error('Error fetching Razorpay key:', error)
+    );
+  } catch (err: any) {
+    console.error("Error fetching Razorpay key:", err);
     return new Response(
-      JSON.stringify({ 
-        error: error.message,
-        success: false 
-      }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500 
+      JSON.stringify({ error: err.message, success: false }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       }
-    )
+    );
   }
-})
+});

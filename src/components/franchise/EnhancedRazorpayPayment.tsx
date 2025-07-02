@@ -179,10 +179,38 @@ const EnhancedRazorpayPayment: React.FC<EnhancedRazorpayPaymentProps> = ({
         theme: {
           color: '#047857'
         },
-        handler: function (response: any) {
+        handler: async function (response: any) {
           console.log('Payment successful:', response);
-          setIsLoading(false);
-          onPaymentSuccess(response);
+          
+          try {
+            // Verify payment with backend
+            const { data: verificationResult, error: verificationError } = await supabase.functions.invoke('verify-razorpay-payment', {
+              body: {
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                order_id: orderId,
+                amount: amount
+              }
+            });
+
+            if (verificationError || !verificationResult?.success) {
+              console.error('Payment verification failed:', verificationError);
+              throw new Error('Payment verification failed');
+            }
+
+            console.log('Payment verified successfully:', verificationResult);
+            setIsLoading(false);
+            onPaymentSuccess({
+              ...response,
+              verified: true,
+              order_id: orderId
+            });
+          } catch (error) {
+            console.error('Payment verification error:', error);
+            setIsLoading(false);
+            onPaymentError(error);
+          }
         },
         modal: {
           ondismiss: function() {
