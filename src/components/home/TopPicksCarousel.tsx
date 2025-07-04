@@ -22,42 +22,42 @@ const TopPicksCarousel = () => {
     {
       id: 1,
       name: 'Premium Earl Grey',
-      image: '/lovable-uploads/a108b20f-3540-49a6-8274-0492273617cc.png',
+      image: '/lovable-uploads/WhatsApp Image 2025-07-05 at 02.02.10.jpeg',
       description: 'Aromatic blend with bergamot essence, perfect for afternoon tea moments',
       rating: 4.8
     },
     {
       id: 2,
       name: 'Himalayan Green Tea',
-      image: '/lovable-uploads/a108b20f-3540-49a6-8274-0492273617cc.png',
+      image: '/lovable-uploads/WhatsApp Image 2025-07-05 at 02.02.08.jpeg',
       description: 'Fresh mountain tea with natural antioxidants for health and wellness',
       rating: 4.9
     },
     {
       id: 3,
       name: 'Royal Masala Chai',
-      image: '/lovable-uploads/a108b20f-3540-49a6-8274-0492273617cc.png',
+      image: '/lovable-uploads/WhatsApp Image 2025-07-05 at 02.02.14.jpeg',
       description: 'Traditional spice blend for authentic Indian chai experience',
       rating: 4.7
     },
     {
       id: 4,
       name: 'Chamomile Dreams',
-      image: '/lovable-uploads/a108b20f-3540-49a6-8274-0492273617cc.png',
+      image: '/lovable-uploads/WhatsApp Image 2025-07-05 at 02.02.16.jpeg',
       description: 'Relaxing herbal tea for peaceful evenings and better sleep',
       rating: 4.6
     },
     {
       id: 5,
       name: 'Dragon Well Green',
-      image: '/lovable-uploads/a108b20f-3540-49a6-8274-0492273617cc.png',
+      image: '/lovable-uploads/WhatsApp Image 2025-07-05 at 02.02.17.jpeg',
       description: 'Premium Chinese green tea with delicate flavor and rich heritage',
       rating: 4.8
     },
     {
       id: 6,
       name: 'English Breakfast',
-      image: '/lovable-uploads/a108b20f-3540-49a6-8274-0492273617cc.png',
+      image: '/lovable-uploads/WhatsApp Image 2025-07-05 at 02.02.12.jpeg',
       description: 'Classic morning blend with robust flavor to start your day right',
       rating: 4.7
     }

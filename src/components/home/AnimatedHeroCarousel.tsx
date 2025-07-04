@@ -18,7 +18,7 @@ const slides: CarouselSlide[] = [
     title: "Tea That Suits You!",
     subtitle: "Premium Tea Experience",
     description: "Discover the finest collection of handpicked teas from around the world. Each blend crafted with love and tradition.",
-    image: "https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=1920&h=1080&fit=crop",
+    image: "/lovable-uploads/hariyanto-ktm-N-UFVJ44xqY-unsplash.jpg",
     buttonText: "Explore Now"
   },
   {
@@ -26,7 +26,7 @@ const slides: CarouselSlide[] = [
     title: "The Taste of Purity",
     subtitle: "100% Natural & Organic",
     description: "Experience authentic flavors with our sustainably sourced, premium quality tea blends.",
-    image: "https://images.unsplash.com/photo-1556881286-fc6915169721?w=1920&h=1080&fit=crop",
+    image: "/lovable-uploads/try1.jpg",
     buttonText: "Shop Collection"
   },
   {
@@ -137,7 +137,7 @@ const AnimatedHeroCarousel = () => {
           {/* Animated Subtitle */}
           <AnimatedText
             text={currentSlideData.subtitle}
-            className="text-green-400 text-lg md:text-xl font-medium mb-4"
+            className="text-lg md:text-xl font-medium mb-4"
             delay={200}
           />
           

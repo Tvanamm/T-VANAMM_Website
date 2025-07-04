@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowRight, Star, Users, Trophy, Coffee, Sparkles, Play, CheckCircle, Award, MapPin, TrendingUp, X, Download, FileText, Package, Award as AwardIcon, Shield, CheckCircle2 } from 'lucide-react';
+import { ArrowRight, Star, Users, Trophy, Coffee, Sparkles, Play, CheckCircle, Award, MapPin, TrendingUp, X, Download, FileText, Package, Award as AwardIcon, Shield, CheckCircle2, Home } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import ModernNavbar from '@/components/ModernNavbar';
 import Footer from '@/components/Footer';
@@ -13,6 +13,7 @@ import TopPicksCarousel from '@/components/home/TopPicksCarousel';
 import CountingNumber from '@/components/CountingNumber';
 import FranchiseForm from '@/components/FranchiseForm';
 import { useAuth } from '@/contexts/AuthContext';
+import AnimatedHeroCarousel from '@/components/home/AnimatedHeroCarousel';
 
 const Index = () => {
   const { user } = useAuth();
@@ -37,50 +38,7 @@ const Index = () => {
       <ModernNavbar />
       
       {/* Hero Section */}
-      <section className="py-24 md:py-32 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-2 gap-8 items-center">
-            {/* Left Column */}
-            <div>
-              <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-                Experience the Authentic Taste of Premium Tea
-              </h1>
-              <p className="text-lg text-gray-700 mb-8">
-                Discover a world of exquisite flavors with our carefully curated selection of teas. From traditional blends to innovative infusions, find your perfect cup.
-              </p>
-              <div className="flex space-x-4">
-                <Link to="/About">
-                  <Button 
-                    className="text-white"
-                    style={{ backgroundColor: 'rgb(0, 100, 55)' }}
-                  >
-                    Know Us More <ArrowRight className="ml-2" />
-                  </Button>
-                </Link>
-                <Button variant="outline" onClick={() => setShowEnquiryModal(true)}>
-                  Franchise Enquiry
-                </Button>
-              </div>
-            </div>
-            <div className="relative">
-              <div className="relative w-full h-96 lg:h-[500px] rounded-3xl overflow-hidden shadow-2xl bg-gradient-to-br from-green-100 to-green-200">
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-8xl">🫖</div>
-                </div>
-                <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-full px-4 py-2">
-                  <div className="flex items-center space-x-2">
-                    <div 
-                      className="w-2 h-2 rounded-full animate-pulse" 
-                      style={{ backgroundColor: 'rgb(0, 100, 55)' }}
-                    ></div>
-                    <span className="text-sm font-medium">Fresh & Hot</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      <AnimatedHeroCarousel/>
 
       {/* Top Picks Carousel */}
       <TopPicksCarousel />

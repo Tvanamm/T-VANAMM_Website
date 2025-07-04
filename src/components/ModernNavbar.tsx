@@ -87,19 +87,18 @@ const ModernNavbar = () => {
                     src="/lovable-uploads/a108b20f-3540-49a6-8274-0492273617cc.png" 
                     alt="T VANAMM Logo" 
                     className="w-full h-full object-contain"
-                    width="40"
+                    width="100"
                     height="40"
                     loading="eager"
                     style={{ imageRendering: 'crisp-edges' }}
                   />
-                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-full animate-pulse"></div>
                 </div>
               </div>
               <div className="flex flex-col">
-                <span className="text-2xl font-bold bg-gradient-to-r from-emerald-700 to-teal-600 bg-clip-text text-transparent">
+                <span className="text-2xl font-bold text-[rgb(0,100,55)]">
                   T VANAMM
                 </span>
-                <span className="text-xs text-emerald-600/70 font-medium tracking-wide">The Taste of Purity</span>
+                <span className="text-xs font-bold text-[rgb(0,100,55)] font-medium tracking-wide">A Taste of Purity</span>
               </div>
             </Link>
           </div>
