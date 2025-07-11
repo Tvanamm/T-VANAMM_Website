@@ -179,13 +179,32 @@ const OrderWorkflowCard = memo(({ order, onOrderUpdated }: OrderWorkflowCardProp
       />
 
       <PackingWorkflowModal
-        isOpen={showPackingModal}
-        onClose={() => setShowPackingModal(false)}
-        order={order}
-        onPackingComplete={async () => {
-          await onOrderUpdated();
-          setShowPackingModal(false);
-        }}
+
+          isOpen={showPackingModal}
+          onClose={() => setShowPackingModal(false)}
+          order={order}
+          onPackingComplete={async () => {
+            // 1) mark as packed in DB (if not already)
+            await supabase
+              .from('franchise_orders')
+              .update({
+                status: 'packed',
+                packed_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', order.id);
+
+            // 2) refresh data
+            await onOrderUpdated();
+
+        -   // 3) (wrong) keep packing open
+        -   setShowPackingModal(true);
+
+        +   // 3) close packing
+        +   setShowPackingModal(false);
+        +   // 4) auto-open shipping
+        +   setShowShippingModal(true);
+          }}
       />
 
       <ShippingDetailsModal
@@ -378,4 +397,4 @@ const OrderActions = memo(({ order, onOrderUpdated, onShowDeliveryModal, onShowP
 
 OrderActions.displayName = 'OrderActions';
 
-export default OrderWorkflowCard;
+export default OrderWorkflowCard; 

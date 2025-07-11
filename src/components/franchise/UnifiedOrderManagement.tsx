@@ -14,6 +14,7 @@ import { useRealFranchiseProfile } from '@/hooks/useRealFranchiseProfile';
 import { useFranchiseMembers } from '@/hooks/useFranchiseMembers';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import ShippingDetailsViewer from './ShippingDetailsViewer';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -27,7 +28,13 @@ import {
   ArrowLeft,
   Menu,
   CreditCard,
-  Shield
+   Shield,
+    Eye,
+    ChevronDown,
+    ChevronUp,
+    MapPin,
+    User,
+    Calendar
 } from 'lucide-react';
 
 const UnifiedOrderManagement = () => {
@@ -41,6 +48,9 @@ const UnifiedOrderManagement = () => {
   const navigate = useNavigate();
   
   const [showNavMenu, setShowNavMenu] = useState(false);
+  const [expandedOrders, setExpandedOrders] = useState<Set<string>>(new Set());
+  const [shippingViewerOpen, setShippingViewerOpen] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<any>(null);
 
   // Find current user's franchise member record
   const currentMember = franchiseMembers.find(member => 
@@ -159,6 +169,20 @@ const UnifiedOrderManagement = () => {
     navigate('/payment', {
       state: { orderId }
     });
+  };
+    const toggleOrderExpansion = (orderId: string) => {
+    const newExpanded = new Set(expandedOrders);
+    if (newExpanded.has(orderId)) {
+      newExpanded.delete(orderId);
+    } else {
+      newExpanded.add(orderId);
+    }
+    setExpandedOrders(newExpanded);
+  };
+
+  const handleViewShippingDetails = (order: any) => {
+    setSelectedOrder(order);
+    setShippingViewerOpen(true);
   };
 
   const getStatusIcon = (status: string) => {
@@ -303,58 +327,203 @@ const UnifiedOrderManagement = () => {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {orders.map((order) => (
-                      <div key={order.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
-                        <div className="flex items-center gap-4">
-                          <div className="flex items-center gap-2">
-                            {getStatusIcon(order.status)}
-                            <div>
-                              <p className="font-semibold">Order #{order.id.slice(0, 8)}</p>
-                              <p className="text-sm text-gray-600">
-                                {new Date(order.created_at).toLocaleDateString('en-US', {
-                                  year: 'numeric',
-                                  month: 'short',
-                                  day: 'numeric'
-                                })}
-                              </p>
+                                        {orders.map((order) => {
+                      const isExpanded = expandedOrders.has(order.id);
+                      const hasShippingDetails = (order as any).shipping_details && 
+                        (order.status === 'shipped' || order.status === 'delivered');
+                      
+                      return (
+                        <div key={order.id} className="border rounded-lg overflow-hidden">
+                          <div className="p-4 hover:bg-gray-50 transition-colors">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-4">
+                                <div className="flex items-center gap-2">
+                                  {getStatusIcon(order.status)}
+                                  <div>
+                                    <p className="font-semibold">Order #{order.id.slice(0, 8)}</p>
+                                    <p className="text-sm text-gray-600">
+                                      {new Date(order.created_at).toLocaleDateString('en-US', {
+                                        year: 'numeric',
+                                        month: 'short',
+                                        day: 'numeric'
+                                      })}
+                                    </p>
+                                     {(order as any).tracking_number && (
+                                       <p className="text-xs text-blue-600 font-mono">
+                                         Track: {(order as any).tracking_number}
+                                       </p>
+                                     )}
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <div className="text-right">
+                                  <p className="font-bold text-emerald-600">
+                                    ₹{order.total_amount.toLocaleString()}
+                                  </p>
+                                  {order.delivery_fee_override && (
+                                    <p className="text-xs text-gray-600">
+                                      + ₹{order.delivery_fee_override} delivery
+                                    </p>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Badge className={`${getStatusColor(order.status)} border-0`}>
+                                    {order.status}
+                                  </Badge>
+                                  {order.status === 'confirmed' && (
+                                    <Button
+                                      onClick={() => handlePayNow(order.id)}
+                                      size="sm"
+                                      className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+                                    >
+                                      <CreditCard className="h-4 w-4 mr-1" />
+                                      Pay Now
+                                    </Button>
+                                  )}
+                                  {hasShippingDetails && (
+                                    <Button
+                                      onClick={() => handleViewShippingDetails(order)}
+                                      size="sm"
+                                      variant="outline"
+                                      className="border-blue-200 text-blue-600 hover:bg-blue-50"
+                                    >
+                                      <Eye className="h-4 w-4 mr-1" />
+                                      View Shipping
+                                    </Button>
+                                  )}
+                                  <Button
+                                    onClick={() => toggleOrderExpansion(order.id)}
+                                    size="sm"
+                                    variant="ghost"
+                                  >
+                                    {isExpanded ? (
+                                      <ChevronUp className="h-4 w-4" />
+                                    ) : (
+                                      <ChevronDown className="h-4 w-4" />
+                                    )}
+                                  </Button>
+                                </div>
+                              </div>
                             </div>
                           </div>
+
+                          {/* Expanded Order Details */}
+                          {isExpanded && (
+                            <div className="border-t bg-gray-50 p-4">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {/* Order Details */}
+                                <div className="space-y-3">
+                                  <h4 className="font-medium text-gray-800 flex items-center gap-2">
+                                    <Package className="h-4 w-4" />
+                                    Order Details
+                                  </h4>
+                                  <div className="bg-white p-3 rounded-lg border">
+                                    <div className="space-y-2 text-sm">
+                                      <div className="flex justify-between">
+                                        <span className="text-gray-600">Franchise:</span>
+                                        <span className="font-medium">{order.franchise_name}</span>
+                                      </div>
+                                       <div className="flex justify-between">
+                                         <span className="text-gray-600">TVANAMM ID:</span>
+                                         <span className="font-medium">{(order as any).tvanamm_id || 'N/A'}</span>
+                                       </div>
+                                       <div className="flex justify-between">
+                                         <span className="text-gray-600">Total Amount:</span>
+                                         <span className="font-bold text-emerald-600">
+                                           ₹{order.total_amount.toLocaleString()}
+                                         </span>
+                                       </div>
+                                       {(order as any).loyalty_points_used > 0 && (
+                                         <div className="flex justify-between">
+                                           <span className="text-gray-600">Loyalty Points Used:</span>
+                                           <span className="font-medium text-purple-600">
+                                             {(order as any).loyalty_points_used} points
+                                           </span>
+                                         </div>
+                                       )}
+                                    </div>
+                                  </div>
+                                </div>
+
+                                 {/* Shipping Information */}
+                                 {hasShippingDetails && (order as any).shipping_details && (
+                                   <div className="space-y-3">
+                                     <h4 className="font-medium text-gray-800 flex items-center gap-2">
+                                       <Truck className="h-4 w-4" />
+                                       Quick Shipping Info
+                                     </h4>
+                                     <div className="bg-white p-3 rounded-lg border">
+                                       <div className="space-y-2 text-sm">
+                                         {(order as any).shipping_details.vehicleNumber && (
+                                           <div className="flex items-center gap-2">
+                                             <Truck className="h-3 w-3 text-blue-600" />
+                                             <span className="font-medium">
+                                               {(order as any).shipping_details.vehicleNumber}
+                                             </span>
+                                           </div>
+                                         )}
+                                         {(order as any).shipping_details.driverName && (
+                                           <div className="flex items-center gap-2">
+                                             <User className="h-3 w-3 text-green-600" />
+                                             <span>{(order as any).shipping_details.driverName}</span>
+                                           </div>
+                                         )}
+                                         {(order as any).shipping_details.estimatedDelivery && (
+                                           <div className="flex items-center gap-2">
+                                             <Calendar className="h-3 w-3 text-purple-600" />
+                                             <span>
+                                               {new Date((order as any).shipping_details.estimatedDelivery).toLocaleDateString()}
+                                             </span>
+                                           </div>
+                                         )}
+                                         <Button
+                                           onClick={() => handleViewShippingDetails(order)}
+                                           size="sm"
+                                           variant="outline"
+                                           className="w-full mt-2 border-blue-200 text-blue-600 hover:bg-blue-50"
+                                         >
+                                           <Eye className="h-4 w-4 mr-1" />
+                                           View Full Details
+                                         </Button>
+                                       </div>
+                                     </div>
+                                   </div>
+                                 )}
+
+                                {/* Delivery Address */}
+                                <div className="space-y-3 md:col-span-2">
+                                  <h4 className="font-medium text-gray-800 flex items-center gap-2">
+                                    <MapPin className="h-4 w-4" />
+                                    Delivery Address
+                                  </h4>
+                                  <div className="bg-white p-3 rounded-lg border">
+                                    <p className="text-sm">{order.shipping_address}</p>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          )}
                         </div>
-                        <div className="flex items-center gap-4">
-                          <div className="text-right">
-                            <p className="font-bold text-emerald-600">
-                              ₹{order.total_amount.toLocaleString()}
-                            </p>
-                            {order.delivery_fee_override && (
-                              <p className="text-xs text-gray-600">
-                                + ₹{order.delivery_fee_override} delivery
-                              </p>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Badge className={`${getStatusColor(order.status)} border-0`}>
-                              {order.status}
-                            </Badge>
-                            {order.status === 'confirmed' && (
-                              <Button
-                                onClick={() => handlePayNow(order.id)}
-                                size="sm"
-                                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
-                              >
-                                <CreditCard className="h-4 w-4 mr-1" />
-                                Pay Now
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </CardContent>
             </Card>
           </TabsContent>
         </Tabs>
+                {/* Shipping Details Viewer Modal */}
+        {selectedOrder && (
+          <ShippingDetailsViewer
+            isOpen={shippingViewerOpen}
+            onClose={() => {
+              setShippingViewerOpen(false);
+              setSelectedOrder(null);
+            }}
+            order={selectedOrder}
+          />
+        )}
       </div>
     </>
   );

@@ -163,29 +163,7 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ chartData, analytics, onQuick
         </CardContent>
       </Card>
 
-      {/* Business Performance Chart */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="h-5 w-5 text-blue-600" />
-            Real-time Business Performance
-          </CardTitle>
-          <CardDescription>Live revenue and order statistics</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={350}>
-            <BarChart data={chartData.revenueData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="revenue" fill="#8884d8" name="Revenue" />
-              <Bar dataKey="orders" fill="#82ca9d" name="Orders" />
-            </BarChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
+      
 
       <EnhancedSendNotificationModal 
         open={showNotificationModal}

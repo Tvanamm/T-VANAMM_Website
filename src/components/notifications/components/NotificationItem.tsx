@@ -10,7 +10,11 @@ import {
   MessageSquare,
   Shield,
   Crown,
-  CheckCircle
+  CheckCircle,
+  Truck,
+  Calendar,
+  User,
+  MapPin
 } from 'lucide-react';
 
 interface NotificationItemProps {
@@ -39,6 +43,8 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
         return <Package className="h-4 w-4 text-blue-600" />;
       case 'order_status_update':
         return <CheckCircle className="h-4 w-4 text-green-600" />;
+      case 'order_shipped':
+        return <Truck className="h-4 w-4 text-blue-600" />;
       case 'owner_message':
         return <Crown className="h-4 w-4 text-yellow-600" />;
       case 'admin_message':
@@ -64,6 +70,8 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
         return 'bg-blue-50 hover:bg-blue-100 border-blue-200';
       case 'owner_message':
         return 'bg-yellow-50 hover:bg-yellow-100 border-yellow-200';
+      case 'order_shipped':
+        return 'bg-blue-50 hover:bg-blue-100 border-blue-200';
       case 'verification_request':
         return 'bg-orange-50 hover:bg-orange-100 border-orange-200';
       default:
@@ -77,6 +85,8 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
         return <Badge variant="destructive" className="text-xs">High Priority</Badge>;
       case 'new_franchise_order':
         return <Badge variant="default" className="text-xs">New Order</Badge>;
+      case 'order_shipped':
+        return <Badge className="text-xs bg-blue-100 text-blue-800">Shipped</Badge>;
       case 'verification_request':
         return <Badge variant="secondary" className="text-xs">Action Required</Badge>;
       default:
@@ -123,6 +133,46 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
             <p className={`text-sm text-gray-600 mb-2 line-clamp-2 ${!notification.read ? 'text-gray-800' : ''}`}>
               {notification.message}
             </p>
+        
+        {/* Special handling for order_shipped notifications */}
+            {notification.type === 'order_shipped' && notification.data && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-2 space-y-2">
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  {notification.data.tracking_number && (
+                    <div className="flex items-center gap-1">
+                      <Package className="h-3 w-3 text-blue-600" />
+                      <span className="font-mono text-blue-800">
+                        {notification.data.tracking_number}
+                      </span>
+                    </div>
+                  )}
+                  {notification.data.shipping_details?.vehicleNumber && (
+                    <div className="flex items-center gap-1">
+                      <Truck className="h-3 w-3 text-blue-600" />
+                      <span className="text-blue-800">
+                        {notification.data.shipping_details.vehicleNumber}
+                      </span>
+                    </div>
+                  )}
+                  {notification.data.shipping_details?.driverName && (
+                    <div className="flex items-center gap-1">
+                      <User className="h-3 w-3 text-blue-600" />
+                      <span className="text-blue-800">
+                        {notification.data.shipping_details.driverName}
+                      </span>
+                    </div>
+                  )}
+                  {notification.data.estimated_delivery && (
+                    <div className="flex items-center gap-1">
+                      <Calendar className="h-3 w-3 text-blue-600" />
+                      <span className="text-blue-800">
+                        {new Date(notification.data.estimated_delivery).toLocaleDateString()}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
             <div className="flex items-center justify-between">
               <span className="text-xs text-gray-500">
                 {formatDate(notification.created_at)}
