@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -103,6 +102,13 @@ const Order = () => {
             display: flex;
             width: calc(320px * 10);
           }
+          
+          .platform-logo {
+            width: 100px;
+            height: 100px;
+            object-fit: contain;
+            transition: all 0.3s ease;
+          }
         `}
       </style>
       
@@ -127,22 +133,66 @@ const Order = () => {
             <div className="carousel-container">
               <div className="carousel-track seamless-scroll-right">
                 {[
-                  { name: 'Swiggy', color: 'orange-500', emoji: '🟠', url: 'https://www.swiggy.com/restaurants/tvanamm-tea-coffee' },
-                  { name: 'Zomato', color: 'red-500', emoji: '🔴', url: 'https://www.zomato.com/hyderabad/tvanamm-tea-coffee' },
-                  { name: 'Mpin', color: 'blue-500', emoji: '🔵', url: 'https://www.example.com/mpin' },
-                  { name: 'Food Panda', color: 'pink-500', emoji: '🟡', url: 'https://www.foodpanda.com/restaurant/tvanamm-tea-coffee' }
+                  { 
+                    name: 'Swiggy', 
+                    color: 'orange-500', 
+                    image: '/lovable-uploads/swiigy.webp', 
+                    url: 'https://www.swiggy.com/restaurants/tvanamm-tea-coffee' 
+                  },
+                  { 
+                    name: 'Zomato', 
+                    color: 'red-500', 
+                    image: '/lovable-uploads/zomato.webp', 
+                    url: 'https://www.zomato.com/hyderabad/tvanamm-tea-coffee' 
+                  },
+                  { 
+                    name: 'Mpin', 
+                    color: 'blue-500', 
+                    image: '/lovable-uploads/mpin.webp', 
+                    url: 'https://www.example.com/mpin' 
+                  },
+                  { 
+                    name: 'Food Panda', 
+                    color: 'pink-500', 
+                    image: '/lovable-uploads/foodpanda.webp', 
+                    url: 'https://www.foodpanda.com/restaurant/tvanamm-tea-coffee' 
+                  }
                 ].concat([
-                  { name: 'Swiggy', color: 'orange-500', emoji: '🟠', url: 'https://www.swiggy.com/restaurants/tvanamm-tea-coffee' },
-                  { name: 'Zomato', color: 'red-500', emoji: '🔴', url: 'https://www.zomato.com/hyderabad/tvanamm-tea-coffee' },
-                  { name: 'Mpin', color: 'blue-500', emoji: '🔵', url: 'https://www.example.com/mpin' },
-                  { name: 'Food Panda', color: 'pink-500', emoji: '🟡', url: 'https://www.foodpanda.com/restaurant/tvanamm-tea-coffee' }
+                  { 
+                    name: 'Swiggy', 
+                    color: 'orange-500', 
+                    image: '/lovable-uploads/swii`gy.webp', 
+                    url: 'https://www.swiggy.com/restaurants/tvanamm-tea-coffee' 
+                  },
+                  { 
+                    name: 'Zomato', 
+                    color: 'red-500', 
+                    image: '/lovable-uploads/zomato.webp', 
+                    url: 'https://www.zomato.com/hyderabad/tvanamm-tea-coffee' 
+                  },
+                  { 
+                    name: 'Mpin', 
+                    color: 'blue-500', 
+                    image: '/lovable-uploads/mpin.webp', 
+                    url: 'https://www.example.com/mpin' 
+                  },
+                  { 
+                    name: 'Food Panda', 
+                    color: 'pink-500', 
+                    image: '/lovable-uploads/foodpanda.webp', 
+                    url: 'https://www.foodpanda.com/restaurant/tvanamm-tea-coffee' 
+                  }
                 ]).map((platform, index) => (
                   <div key={index} className="carousel-item">
                     <a href={platform.url} target="_blank" rel="noopener noreferrer">
                       <Card className="border-0 shadow-lg hover:shadow-2xl center-card-hover bg-white group h-48">
                         <CardContent className="p-8 text-center flex flex-col justify-center h-full">
                           <div className={`bg-${platform.color} w-20 h-20 rounded-full mx-auto mb-6 flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300`}>
-                            <span className="text-3xl">{platform.emoji}</span>
+                            <img 
+                              src={platform.image} 
+                              alt={platform.name} 
+                              className="platform-logo group-hover:scale-110"
+                            />
                           </div>
                           <h3 className="text-2xl font-bold text-gray-800 group-hover:text-emerald-600 transition-colors duration-300">
                             {platform.name}

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -15,49 +14,48 @@ interface TopPick {
 
 const TopPicksCarousel = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isAutoPlaying, setIsAutoPlaying] = useState(true);
   const [isHovered, setIsHovered] = useState(false);
 
   const topPicks: TopPick[] = [
     {
       id: 1,
       name: 'Premium Earl Grey',
-      image: '/lovable-uploads/WhatsApp Image 2025-07-05 at 02.02.10.jpeg',
+      image: '/lovable-uploads/elachi tea.webp',
       description: 'Aromatic blend with bergamot essence, perfect for afternoon tea moments',
       rating: 4.8
     },
     {
       id: 2,
       name: 'Himalayan Green Tea',
-      image: '/lovable-uploads/WhatsApp Image 2025-07-05 at 02.02.08.jpeg',
+      image: '/lovable-uploads/greentea.webp',
       description: 'Fresh mountain tea with natural antioxidants for health and wellness',
       rating: 4.9
     },
     {
       id: 3,
       name: 'Royal Masala Chai',
-      image: '/lovable-uploads/WhatsApp Image 2025-07-05 at 02.02.14.jpeg',
+      image: '/lovable-uploads/icecream.webp',
       description: 'Traditional spice blend for authentic Indian chai experience',
       rating: 4.7
     },
     {
       id: 4,
       name: 'Chamomile Dreams',
-      image: '/lovable-uploads/WhatsApp Image 2025-07-05 at 02.02.16.jpeg',
+      image: '/lovable-uploads/bluepeatea.webp',
       description: 'Relaxing herbal tea for peaceful evenings and better sleep',
       rating: 4.6
     },
     {
       id: 5,
       name: 'Dragon Well Green',
-      image: '/lovable-uploads/WhatsApp Image 2025-07-05 at 02.02.17.jpeg',
+      image: '/lovable-uploads/kitkatmilkshake.webp',
       description: 'Premium Chinese green tea with delicate flavor and rich heritage',
       rating: 4.8
     },
     {
       id: 6,
       name: 'English Breakfast',
-      image: '/lovable-uploads/WhatsApp Image 2025-07-05 at 02.02.12.jpeg',
+      image: '/lovable-uploads/salad.webp',
       description: 'Classic morning blend with robust flavor to start your day right',
       rating: 4.7
     }
@@ -80,45 +78,19 @@ const TopPicksCarousel = () => {
   };
 
   useEffect(() => {
-    if (!isAutoPlaying || isHovered) return;
+    if (isHovered) return;
 
     const interval = setInterval(() => {
       nextSlide();
     }, 2000);
 
     return () => clearInterval(interval);
-  }, [currentIndex, isAutoPlaying, isHovered]);
+  }, [currentIndex, isHovered]);
 
   return (
     <section className="py-16 bg-white overflow-hidden">
       <style>
         {`
-          @keyframes smooth-slide-in {
-            0% {
-              transform: translateX(100%);
-              opacity: 0;
-            }
-            100% {
-              transform: translateX(0);
-              opacity: 1;
-            }
-          }
-          
-          @keyframes smooth-slide-out {
-            0% {
-              transform: translateX(0);
-              opacity: 1;
-            }
-            100% {
-              transform: translateX(-100%);
-              opacity: 0;
-            }
-          }
-          
-          .carousel-item-animate {
-            animation: smooth-slide-in 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-          }
-          
           .carousel-container-enhanced {
             position: relative;
             overflow: hidden;
@@ -181,7 +153,7 @@ const TopPicksCarousel = () => {
             >
               {topPicks.concat(topPicks.slice(0, 3)).map((item, index) => (
                 <div key={`${item.id}-${index}`} className="carousel-item-enhanced">
-                  <Card className="group hover:shadow-2xl transition-all duration-500 transform hover:scale-105 hover:-translate-y-2 bg-white border-0 shadow-lg overflow-hidden h-full">
+                  <Card className="group hover:shadow-2xl transition-all duration-500 transform hover:scale-105 hover:-translate-y-2 bg-white border border-gray-300 shadow-lg overflow-hidden h-full">
                     <div className="aspect-square overflow-hidden relative">
                       <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"></div>
                       <img
@@ -190,7 +162,7 @@ const TopPicksCarousel = () => {
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                       />
                     </div>
-                    <CardContent className="p-6 flex flex-col justify-between flex-1">
+                    <CardContent className="p-6 flex flex-col justify-between flex-1 border-t border-gray-200">
                       <div>
                         <div className="flex items-center justify-between mb-3">
                           <h3 
@@ -199,7 +171,7 @@ const TopPicksCarousel = () => {
                           >
                             {item.name}
                           </h3>
-                          <div className="flex items-center gap-1 bg-yellow-50 px-2 py-1 rounded-full">
+                          <div className="flex items-center gap-1 bg-yellow-50 px-2 py-1 rounded-full border border-yellow-100">
                             <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                             <span className="text-sm font-semibold text-yellow-700">{item.rating}</span>
                           </div>
@@ -217,7 +189,7 @@ const TopPicksCarousel = () => {
           <Button
             variant="outline"
             size="icon"
-            className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white shadow-xl border-0 hover:scale-110 transition-all duration-300 z-20"
+            className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white shadow-xl border border-gray-300 hover:scale-110 transition-all duration-300 z-20"
             onClick={prevSlide}
           >
             <ChevronLeft className="h-5 w-5" />
@@ -226,7 +198,7 @@ const TopPicksCarousel = () => {
           <Button
             variant="outline"
             size="icon"
-            className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white shadow-xl border-0 hover:scale-110 transition-all duration-300 z-20"
+            className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white shadow-xl border border-gray-300 hover:scale-110 transition-all duration-300 z-20"
             onClick={nextSlide}
           >
             <ChevronRight className="h-5 w-5" />
@@ -239,8 +211,8 @@ const TopPicksCarousel = () => {
                 key={index}
                 className={`transition-all duration-300 rounded-full ${
                   index === currentIndex
-                    ? 'w-8 h-3 shadow-lg'
-                    : 'w-3 h-3 bg-gray-300 hover:bg-gray-400 hover:scale-125'
+                    ? 'w-8 h-3 shadow-lg border border-gray-300'
+                    : 'w-3 h-3 bg-gray-300 hover:bg-gray-400 hover:scale-125 border border-gray-400'
                 }`}
                 style={{
                   backgroundColor: index === currentIndex ? 'rgb(0, 100, 55)' : undefined
@@ -249,19 +221,6 @@ const TopPicksCarousel = () => {
               />
             ))}
           </div>
-        </div>
-
-        {/* Play/Pause Control */}
-        <div className="flex justify-center mt-6">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setIsAutoPlaying(!isAutoPlaying)}
-            className="text-gray-600 transition-colors duration-300"
-            style={{ color: 'rgb(0, 100, 55)' }}
-          >
-            {isAutoPlaying ? 'Pause' : 'Play'} Slideshow
-          </Button>
         </div>
       </div>
     </section>

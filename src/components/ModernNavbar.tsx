@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -103,19 +102,22 @@ const ModernNavbar = () => {
             </Link>
           </div>
 
-          {/* Desktop Navigation */}
+          {/* Desktop Navigation - Updated Order */}
           <div className="hidden md:flex items-center space-x-8">
             <Link to="/" className="nav-link">
               Home
             </Link>
-            <Link to="/order" className="nav-link">
-              Order
-            </Link>
             <Link to="/about" className="nav-link">
               About
             </Link>
+            <Link to="/blog" className="nav-link">
+              Blog
+            </Link>
             <Link to="/franchise" className="nav-link">
               Franchise
+            </Link>
+            <Link to="/order" className="nav-link">
+              Order
             </Link>
             {dashboardLink && (
               <Link 
@@ -265,24 +267,16 @@ const ModernNavbar = () => {
           </div>
         </div>
 
-        {/* Mobile menu */}
+        {/* Mobile menu - Updated Order */}
         {isMenuOpen && (
           <div className="md:hidden">
             <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white/95 backdrop-blur-md border-t border-emerald-100 rounded-b-xl">
-              {/* Mobile navigation links */}
               <Link
                 to="/"
                 className="block px-3 py-2 text-gray-700 hover:text-emerald-600 font-medium transition-colors rounded-lg hover:bg-emerald-50"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Home
-              </Link>
-              <Link
-                to="/order"
-                className="block px-3 py-2 text-gray-700 hover:text-emerald-600 font-medium transition-colors rounded-lg hover:bg-emerald-50"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Order
               </Link>
               <Link
                 to="/about"
@@ -292,11 +286,25 @@ const ModernNavbar = () => {
                 About
               </Link>
               <Link
+                to="/blog"
+                className="block px-3 py-2 text-gray-700 hover:text-emerald-600 font-medium transition-colors rounded-lg hover:bg-emerald-50"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Blog
+              </Link>
+              <Link
                 to="/franchise"
                 className="block px-3 py-2 text-gray-700 hover:text-emerald-600 font-medium transition-colors rounded-lg hover:bg-emerald-50"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Franchise
+              </Link>
+              <Link
+                to="/order"
+                className="block px-3 py-2 text-gray-700 hover:text-emerald-600 font-medium transition-colors rounded-lg hover:bg-emerald-50"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Order
               </Link>
               {dashboardLink && (
                 <Link

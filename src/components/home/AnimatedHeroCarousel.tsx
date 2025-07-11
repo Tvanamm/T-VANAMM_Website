@@ -1,5 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 
@@ -10,6 +10,7 @@ interface CarouselSlide {
   description: string;
   image: string;
   buttonText: string;
+  linkTo: string;
 }
 
 const slides: CarouselSlide[] = [
@@ -18,16 +19,18 @@ const slides: CarouselSlide[] = [
     title: "Tea That Suits You!",
     subtitle: "Premium Tea Experience",
     description: "Discover the finest collection of handpicked teas from around the world. Each blend crafted with love and tradition.",
-    image: "/lovable-uploads/hariyanto-ktm-N-UFVJ44xqY-unsplash.jpg",
-    buttonText: "Explore Now"
+    image: "/lovable-uploads/carousal2.webp",
+    buttonText: "Explore Now",
+    linkTo: "/Franchise"
   },
   {
     id: 2,
     title: "The Taste of Purity",
     subtitle: "100% Natural & Organic",
     description: "Experience authentic flavors with our sustainably sourced, premium quality tea blends.",
-    image: "/lovable-uploads/try1.jpg",
-    buttonText: "Shop Collection"
+    image: "/lovable-uploads/carousal1.webp",
+    buttonText: "Shop Collection",
+    linkTo: "/Order"
   },
   {
     id: 3,
@@ -35,7 +38,17 @@ const slides: CarouselSlide[] = [
     subtitle: "Health & Harmony",
     description: "Rich in antioxidants and natural benefits, our teas promote wellness and mindful living.",
     image: "https://images.unsplash.com/photo-1571934811356-5cc061b6821f?w=1920&h=1080&fit=crop",
-    buttonText: "Learn More"
+    buttonText: "Learn More",
+    linkTo: "/About"
+  },
+  {
+    id: 4,
+    title: "Discover Tea Wisdom",
+    subtitle: "From Our Tea Blog",
+    description: "Explore insightful articles, brewing tips, and the latest tea trends from our expert tea masters.",
+    image: "https://images.unsplash.com/photo-1571934811356-5cc061b6821f?w=1920&h=1080&fit=crop",
+    buttonText: 'Explore Our Blogs',
+    linkTo: '/Blog'
   }
 ];
 
@@ -134,37 +147,45 @@ const AnimatedHeroCarousel = () => {
       {/* Content */}
       <div className="relative h-full flex items-center justify-center text-center text-white">
         <div className="max-w-4xl mx-auto px-4">
-          {/* Animated Subtitle */}
-          <AnimatedText
-            text={currentSlideData.subtitle}
-            className="text-lg md:text-xl font-medium mb-4"
-            delay={200}
-          />
+          {/* Only show subtitle if it exists */}
+          {currentSlideData.subtitle && (
+            <AnimatedText
+              text={currentSlideData.subtitle}
+              className="text-lg md:text-xl font-medium mb-4"
+              delay={200}
+            />
+          )}
           
-          {/* Animated Main Title */}
-          <AnimatedText
-            text={currentSlideData.title}
-            className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6"
-            delay={600}
-          />
+          {/* Only show title if it exists */}
+          {currentSlideData.title && (
+            <AnimatedText
+              text={currentSlideData.title}
+              className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6"
+              delay={600}
+            />
+          )}
           
-          {/* Animated Description */}
-          <div className="opacity-0 animate-fade-in text-lg md:text-xl text-gray-200 mb-8 max-w-2xl mx-auto"
-               style={{ animationDelay: '1.5s', animationFillMode: 'forwards' }}>
-            {currentSlideData.description}
-          </div>
+          {/* Only show description if it exists */}
+          {currentSlideData.description && (
+            <div className="opacity-0 animate-fade-in text-lg md:text-xl text-gray-200 mb-8 max-w-2xl mx-auto"
+                 style={{ animationDelay: '1.5s', animationFillMode: 'forwards' }}>
+              {currentSlideData.description}
+            </div>
+          )}
           
-          {/* Animated Button */}
+          {/* Button - always shown */}
           <div className="opacity-0 animate-fade-in"
                style={{ animationDelay: '2s', animationFillMode: 'forwards' }}>
-            <Button 
-              size="lg" 
-              className="bg-green-600 hover:bg-green-700 text-white px-8 py-4 text-lg hover-scale"
-              style={{ backgroundColor: 'rgb(0, 100, 55)' }}
-            >
-              {currentSlideData.buttonText}
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
+            <Link to={currentSlideData.linkTo} className="inline-block">
+              <Button 
+                size="lg" 
+                className="bg-green-600 hover:bg-green-700 text-white px-8 py-4 text-lg hover-scale"
+                style={{ backgroundColor: 'rgb(0, 100, 55)' }}
+              >
+                {currentSlideData.buttonText}
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+            </Link>
           </div>
         </div>
       </div>

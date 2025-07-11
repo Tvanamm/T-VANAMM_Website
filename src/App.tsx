@@ -19,6 +19,7 @@ import Order from '@/pages/Order';
 import Payment from '@/pages/Payment';
 import PaymentSuccess from '@/pages/PaymentSuccess';
 import EnhancedCheckoutPage from '@/components/franchise/EnhancedCheckoutPage';
+import Blog from './pages/Blog'; // Make sure this import exists
 
 const queryClient = new QueryClient();
 
@@ -44,6 +45,7 @@ function App() {
                 <Route path="/franchise-checkout" element={<EnhancedCheckoutPage />} />
                 <Route path="/payment" element={<Payment />} />
                 <Route path="/success" element={<PaymentSuccess />} />
+                <Route path="/Blog" element={<Blog />} />
               </Routes>
               <Toaster />
               <Sonner />
