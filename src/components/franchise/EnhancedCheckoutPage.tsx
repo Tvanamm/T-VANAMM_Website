@@ -332,10 +332,14 @@ const EnhancedCheckoutPage = () => {
                       <span>-₹{cartSummary.loyaltyDiscount.toLocaleString()}</span>
                     </div>
                   )}
-                  <div className="flex justify-between text-sm text-blue-600">
-                    <span>Delivery Fee:</span>
-                    <span>{cartSummary.deliveryFee === 0 ? 'Free' : `₹${cartSummary.deliveryFee}`}</span>
-                  </div>
+                  <p className="text-sm text-red-600 whitespace-nowrap">
+                    Delivery Fee:{' '}
+                    <span className="font-medium">
+                      {cartSummary.deliveryFee === 0
+                        ? 'Confirmation Required'
+                        : `₹${cartSummary.deliveryFee}`}
+                    </span>
+                  </p>
                   <Separator />
                   <div className="flex justify-between font-semibold text-lg">
                     <span>Total:</span>

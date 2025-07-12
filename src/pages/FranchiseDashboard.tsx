@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+// import Link from "next/link"
 import { 
   AlertCircle,
   User,
@@ -31,7 +32,7 @@ import {
   Building,
   Star
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import LoyaltyPointsCard from '@/components/franchise/LoyaltyPointsCard';
 
 const FranchiseDashboard = () => {
@@ -394,9 +395,11 @@ const FranchiseDashboard = () => {
               <TabsTrigger value="overview" className="data-[state=active]:bg-emerald-500 data-[state=active]:text-white">
                 Overview
               </TabsTrigger>
-              <TabsTrigger value="orders" className="data-[state=active]:bg-emerald-500 data-[state=active]:text-white">
-                Orders
-              </TabsTrigger>
+                <TabsTrigger value="orders" asChild>
+                  <Link to="/order" className="block w-full text-center data-[state=active]:bg-emerald-500 data-[state=active]:text-white">
+                    Orders
+                  </Link>
+                </TabsTrigger>
               <TabsTrigger value="messages" className="data-[state=active]:bg-emerald-500 data-[state=active]:text-white">
                 Messages
                 {unreadCount > 0 && (
