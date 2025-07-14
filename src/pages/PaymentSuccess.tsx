@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useStockOrdering } from '@/hooks/useStockOrdering';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,41 +15,70 @@ const PaymentSuccess = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const location = useLocation();
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [orderId, setOrderId] = useState<string | null>(null);
 
-  const shippingAddress = searchParams.get('address') || '';
-  const paymentId = searchParams.get('payment_id') || '';
+  // Get state from location if coming from checkout
+  const stateItems = location.state?.items || [];
+  const stateCart = location.state?.cart || [];
+
+  // Use either URL params or state
+  const shippingAddress = searchParams.get('address') || location.state?.shippingAddress || '';
+  const paymentId = searchParams.get('payment_id') || location.state?.paymentId || '';
+
+  // Use combined cart data (from state or hook)
+  const currentCart = stateCart.length > 0 ? stateCart : cart;
+  const currentCartTotal = location.state?.total || cartTotal;
 
   useEffect(() => {
-    if (user && cart.length > 0 && shippingAddress && !orderPlaced) {
+    if (user && currentCart.length > 0 && shippingAddress && !orderPlaced) {
       handleOrderPlacement();
     }
-  }, [user, cart, shippingAddress, orderPlaced]);
+  }, [user, currentCart, shippingAddress, orderPlaced]);
 
   const handleOrderPlacement = async () => {
     if (orderPlaced) return;
     
-    const result = await placeOrder(shippingAddress);
-    if (result.success) {
-      setOrderId(result.orderId);
-      setOrderPlaced(true);
+    try {
+      const result = await placeOrder(shippingAddress);
+      if (result.success) {
+        setOrderId(result.orderId);
+        setOrderPlaced(true);
+        toast({
+          title: "Order Placed Successfully!",
+          description: "Your order has been confirmed and will be processed soon.",
+        });
+      } else {
+        navigate('/franchise-dashboard');
+      }
+    } catch (error) {
+      console.error('Order placement error:', error);
       toast({
-        title: "Order Placed Successfully!",
-        description: "Your order has been confirmed and will be processed soon.",
+        title: "Order Failed",
+        description: "There was an error processing your order.",
+        variant: "destructive"
       });
-    } else {
-      navigate('/franchise-dashboard');
+      navigate('/order');
     }
   };
 
   const generateInvoice = () => {
+    if (!orderId || currentCart.length === 0) {
+      toast({
+        title: "Cannot Generate Invoice",
+        description: "Order information is incomplete.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     const invoiceData = {
-      orderId: orderId?.slice(0, 8) || 'Unknown',
+      orderId: orderId.slice(0, 8),
       date: new Date().toLocaleDateString(),
       customerName: user?.name || 'Franchise Member',
-      items: cart,
-      total: cartTotal,
+      items: currentCart,
+      total: currentCartTotal,
       paymentId: paymentId,
       shippingAddress: shippingAddress
     };
@@ -64,8 +93,8 @@ Payment ID: ${invoiceData.paymentId}
 
 ITEMS:
 ------
-${invoiceData.items.map(item => 
-  `${item.item.name} x ${item.quantity} = ₹${(item.item.price * item.quantity).toLocaleString()}`
+${invoiceData.items.map((item: any) => 
+  `${item.item?.name || 'Unknown Item'} x ${item.quantity} = ₹${((item.item?.price || 0) * item.quantity).toLocaleString()}`
 ).join('\n')}
 
 TOTAL: ₹${invoiceData.total.toLocaleString()}
@@ -85,7 +114,7 @@ ${invoiceData.shippingAddress}
     window.URL.revokeObjectURL(url);
   };
 
-  if (!orderPlaced && cart.length === 0) {
+  if (!orderPlaced && currentCart.length === 0) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-teal-50">
         <ModernNavbar />
@@ -129,15 +158,15 @@ ${invoiceData.shippingAddress}
             <div className="border-t pt-4">
               <h3 className="font-semibold mb-3">Order Summary</h3>
               <div className="space-y-2">
-                {cart.map((item) => (
-                  <div key={item.item.id} className="flex justify-between text-sm">
-                    <span>{item.item.name} x {item.quantity}</span>
-                    <span>₹{(item.item.price * item.quantity).toLocaleString()}</span>
+                {currentCart.map((item: any) => (
+                  <div key={item.item?.id || Math.random()} className="flex justify-between text-sm">
+                    <span>{item.item?.name || 'Unknown Item'} x {item.quantity}</span>
+                    <span>₹{((item.item?.price || 0) * item.quantity).toLocaleString()}</span>
                   </div>
                 ))}
                 <div className="border-t pt-2 font-semibold flex justify-between">
                   <span>Total:</span>
-                  <span>₹{cartTotal.toLocaleString()}</span>
+                  <span>₹{currentCartTotal.toLocaleString()}</span>
                 </div>
               </div>
             </div>

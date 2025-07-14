@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -19,7 +18,7 @@ import Order from '@/pages/Order';
 import Payment from '@/pages/Payment';
 import PaymentSuccess from '@/pages/PaymentSuccess';
 import EnhancedCheckoutPage from '@/components/franchise/EnhancedCheckoutPage';
-import Blog from './pages/Blog'; // Make sure this import exists
+import Blog from '@/pages/Blog';
 
 const queryClient = new QueryClient();
 
@@ -42,9 +41,10 @@ function App() {
                 <Route path="/franchise" element={<Franchise />} />
                 <Route path="/order" element={<Order />} />
                 <Route path="/franchise-inventory" element={<Order />} />
+                {/* Enhanced checkout route */}
                 <Route path="/franchise-checkout" element={<EnhancedCheckoutPage />} />
                 <Route path="/payment" element={<Payment />} />
-                <Route path="/success" element={<PaymentSuccess />} />
+                <Route path="/payment-success" element={<PaymentSuccess />} />
                 <Route path="/Blog" element={<Blog />} />
               </Routes>
               <Toaster />

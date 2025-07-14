@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -15,6 +14,7 @@ import { useFranchiseMembers } from '@/hooks/useFranchiseMembers';
 import { ArrowLeft, Package, MapPin, FileText, AlertCircle, CreditCard, Shield } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
+import EnhancedRazorpayPayment from '@/components/franchise/EnhancedRazorpayPayment';
 
 const EnhancedCheckoutPage = () => {
   const { cartItems, cartSummary, clearCart } = useFranchiseCart();
@@ -24,6 +24,11 @@ const EnhancedCheckoutPage = () => {
   const { franchiseMembers } = useFranchiseMembers();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Payment state
+  const [showPayment, setShowPayment] = useState(false);
+  const [orderData, setOrderData] = useState<any>(null);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
   // Find current user's franchise member record
   const currentMember = franchiseMembers.find(member => 
@@ -68,7 +73,8 @@ const EnhancedCheckoutPage = () => {
           name: item.name,
           quantity: item.quantity,
           price: item.price,
-          unit: item.unit
+          unit: item.unit,
+          gst_rate: item.gst_rate
         })),
         totalAmount: cartSummary.total,
         deliveryFee: cartSummary.deliveryFee,
@@ -76,19 +82,69 @@ const EnhancedCheckoutPage = () => {
         shippingAddress: `${shippingDetails.fullAddress}${shippingDetails.landmark ? ', ' + shippingDetails.landmark : ''}${shippingDetails.specialInstructions ? '. Special instructions: ' + shippingDetails.specialInstructions : ''}${orderNotes ? '. Order notes: ' + orderNotes : ''}`
       };
 
-      console.log('Submitting checkout data:', checkoutData);
-      
-      await createOrder(checkoutData);
-      clearCart();
+      setOrderData(checkoutData);
+      setShowPayment(true);
       
     } catch (error) {
       console.error('Checkout error:', error);
       toast({
         title: "Order Failed",
-        description: "Failed to place order. Please try again.",
+        description: "Failed to process order. Please try again.",
         variant: "destructive"
       });
     }
+  };
+
+  const handlePaymentSuccess = async (response: any) => {
+    setIsProcessingPayment(true);
+    try {
+      // 1. First create the order in database
+      const orderResult = await createOrder({
+        ...orderData,
+        paymentId: response.razorpay_payment_id,
+        paymentStatus: 'completed'
+      });
+
+      if (!orderResult.success) {
+        throw new Error('Order creation failed');
+      }
+
+      // 2. Navigate to success page WITH all data
+      navigate('/payment-success', {
+        state: {
+          orderId: orderResult.orderId,
+          paymentId: response.razorpay_payment_id,
+          items: orderData.items,
+          total: orderData.totalAmount,
+          shippingAddress: orderData.shippingAddress,
+          deliveryFee: orderData.deliveryFee,
+          loyaltyPointsUsed: orderData.loyaltyPointsUsed
+        }
+      });
+
+      // 3. Only clear cart AFTER successful navigation
+      clearCart();
+      
+    } catch (error) {
+      console.error('Order creation error:', error);
+      toast({
+        title: "Order Failed",
+        description: "Payment was successful but order creation failed. Please contact support with your payment ID.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsProcessingPayment(false);
+    }
+  };
+
+  const handlePaymentError = (error: any) => {
+    console.error('Payment error:', error);
+    toast({
+      title: "Payment Failed",
+      description: error.error?.description || "Payment could not be processed. Please try again.",
+      variant: "destructive"
+    });
+    setShowPayment(false);
   };
 
   // Show access denied if user doesn't have verified access
@@ -169,6 +225,39 @@ const EnhancedCheckoutPage = () => {
               </Button>
             </CardContent>
           </Card>
+        </div>
+      </div>
+    );
+  }
+
+  if (showPayment && orderData) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-teal-50 pt-20 px-4">
+        <div className="max-w-md mx-auto">
+          <EnhancedRazorpayPayment
+            orderId={`ord_${Date.now()}`}
+            amount={orderData.totalAmount * 100} // convert to paise
+            orderDetails={{
+              franchise_name: franchiseProfile?.name || 'Franchise Member',
+              shipping_address: orderData.shippingAddress,
+              items: orderData.items.map((item: any) => ({
+                item_name: item.name,
+                quantity: item.quantity,
+                unit_price: item.price
+              }))
+            }}
+            onPaymentSuccess={handlePaymentSuccess}
+            onPaymentError={handlePaymentError}
+          />
+          <Button 
+            onClick={() => setShowPayment(false)}
+            variant="outline"
+            className="w-full mt-4"
+            disabled={isProcessingPayment}
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            {isProcessingPayment ? 'Processing...' : 'Back to Order Review'}
+          </Button>
         </div>
       </div>
     );
@@ -370,12 +459,12 @@ const EnhancedCheckoutPage = () => {
                       Processing...
                     </div>
                   ) : (
-                    'Place Order'
+                    'Proceed to Payment'
                   )}
                 </Button>
 
                 <p className="text-xs text-gray-500 text-center">
-                  Your order will be reviewed by admin and you'll be notified about delivery fee and payment instructions.
+                  You'll be redirected to a secure payment gateway to complete your order.
                 </p>
               </CardContent>
             </Card>
