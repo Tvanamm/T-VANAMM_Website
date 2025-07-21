@@ -2,10 +2,11 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin":  "*",
-  "Access-Control-Allow-Headers": "*",              // allow any header
-  "Access-Control-Allow-Methods": "POST,OPTIONS",   // allow POST + preflight
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization,apikey,content-type,x-client-info,x-my-custom-header", // include all you use!
+  "Access-Control-Allow-Methods": "POST,OPTIONS,GET"
 };
+
 
 serve(async (req) => {
   // 1) Handle CORS preflight
@@ -31,11 +32,13 @@ serve(async (req) => {
     }
 
     // 5) Load env vars
-    const keyId     = Deno.env.get("RAZORPAY_KEY_ID");
-    const keySecret = Deno.env.get("RAZORPAY_KEY_SECRET");
-    if (!keyId || !keySecret) {
-      throw new Error("Razorpay credentials not configured");
-    }
+    // @ts-ignore Deno namespace is available in the Edge Function runtime
+        const keyId     = Deno.env.get("RAZORPAY_KEY_ID");
+    // @ts-ignore Deno namespace is available in the Edge Function runtime
+        const keySecret = Deno.env.get("RAZORPAY_KEY_SECRET");
+        if (!keyId || !keySecret) {
+          throw new Error("Razorpay credentials not configured");
+        }
 
     // 6) Prepare payload
     const orderData = {

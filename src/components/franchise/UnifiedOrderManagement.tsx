@@ -12,11 +12,13 @@ import { useFranchiseOrders } from '@/hooks/useFranchiseOrders';
 import { usePendingOrders } from '@/hooks/usePendingOrders';
 import { useRealFranchiseProfile } from '@/hooks/useRealFranchiseProfile';
 import { useFranchiseMembers } from '@/hooks/useFranchiseMembers';
+import { usePaymentTransactions } from '@/hooks/usePaymentTransactions';
+import { useInvoiceManagement } from '@/hooks/useInvoiceManagement';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import ShippingDetailsViewer from './ShippingDetailsViewer';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import ShippingDetailsViewer from './ShippingDetailsViewer';
 import { 
   ShoppingCart, 
   Package, 
@@ -28,13 +30,15 @@ import {
   ArrowLeft,
   Menu,
   CreditCard,
-   Shield,
-    Eye,
-    ChevronDown,
-    ChevronUp,
-    MapPin,
-    User,
-    Calendar
+  Shield,
+  Eye,
+  ChevronDown,
+  ChevronUp,
+  MapPin,
+  User,
+  Calendar,
+  Download,
+  FileText
 } from 'lucide-react';
 
 const UnifiedOrderManagement = () => {
@@ -43,6 +47,8 @@ const UnifiedOrderManagement = () => {
   const { hasPendingPayment, pendingOrders } = usePendingOrders();
   const { franchiseProfile } = useRealFranchiseProfile();
   const { franchiseMembers } = useFranchiseMembers();
+  const { getPaymentStatus } = usePaymentTransactions();
+  const { generateInvoice, getAvailableInvoice, downloadInvoice, canGenerateInvoice } = useInvoiceManagement();
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -166,11 +172,38 @@ const UnifiedOrderManagement = () => {
   };
 
   const handlePayNow = (orderId: string) => {
+    // Check if order is already paid
+    const paymentStatus = getPaymentStatus(orderId);
+    if (paymentStatus === 'completed') {
+      toast({
+        title: "Already Paid",
+        description: "This order has already been paid for.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     navigate('/payment', {
       state: { orderId }
     });
   };
-    const toggleOrderExpansion = (orderId: string) => {
+
+  const handleDownloadInvoice = async (orderId: string) => {
+    try {
+      const availableInvoice = getAvailableInvoice(orderId);
+      
+      if (availableInvoice) {
+        await downloadInvoice(availableInvoice);
+      } else {
+        // Generate new invoice
+        await generateInvoice(orderId);
+      }
+    } catch (error) {
+      console.error('Invoice download failed:', error);
+    }
+  };
+
+  const toggleOrderExpansion = (orderId: string) => {
     const newExpanded = new Set(expandedOrders);
     if (newExpanded.has(orderId)) {
       newExpanded.delete(orderId);
@@ -327,7 +360,7 @@ const UnifiedOrderManagement = () => {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                                        {orders.map((order) => {
+                    {orders.map((order) => {
                       const isExpanded = expandedOrders.has(order.id);
                       const hasShippingDetails = (order as any).shipping_details && 
                         (order.status === 'shipped' || order.status === 'delivered');
@@ -367,43 +400,54 @@ const UnifiedOrderManagement = () => {
                                     </p>
                                   )}
                                 </div>
-                                <div className="flex items-center gap-2">
-                                  <Badge className={`${getStatusColor(order.status)} border-0`}>
-                                    {order.status}
-                                  </Badge>
-                                  {order.status === 'confirmed' && (
-                                    <Button
-                                      onClick={() => handlePayNow(order.id)}
-                                      size="sm"
-                                      className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
-                                    >
-                                      <CreditCard className="h-4 w-4 mr-1" />
-                                      Pay Now
-                                    </Button>
-                                  )}
-                                  {hasShippingDetails && (
-                                    <Button
-                                      onClick={() => handleViewShippingDetails(order)}
-                                      size="sm"
-                                      variant="outline"
-                                      className="border-blue-200 text-blue-600 hover:bg-blue-50"
-                                    >
-                                      <Eye className="h-4 w-4 mr-1" />
-                                      View Shipping
-                                    </Button>
-                                  )}
-                                  <Button
-                                    onClick={() => toggleOrderExpansion(order.id)}
-                                    size="sm"
-                                    variant="ghost"
-                                  >
-                                    {isExpanded ? (
-                                      <ChevronUp className="h-4 w-4" />
-                                    ) : (
-                                      <ChevronDown className="h-4 w-4" />
-                                    )}
-                                  </Button>
-                                </div>
+                                 <div className="flex items-center gap-2">
+                                   <Badge className={`${getStatusColor(order.status)} border-0`}>
+                                     {order.status}
+                                   </Badge>
+                                   {order.status === 'confirmed' && getPaymentStatus(order.id) !== 'completed' && (
+                                     <Button
+                                       onClick={() => handlePayNow(order.id)}
+                                       size="sm"
+                                       className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+                                     >
+                                       <CreditCard className="h-4 w-4 mr-1" />
+                                       Pay Now
+                                     </Button>
+                                   )}
+                                   {canGenerateInvoice(order.status, getPaymentStatus(order.id)) && (
+                                     <Button
+                                       onClick={() => handleDownloadInvoice(order.id)}
+                                       size="sm"
+                                       variant="outline"
+                                       className="border-green-200 text-green-600 hover:bg-green-50"
+                                     >
+                                       <Download className="h-4 w-4 mr-1" />
+                                       Invoice
+                                     </Button>
+                                   )}
+                                   {hasShippingDetails && (
+                                     <Button
+                                       onClick={() => handleViewShippingDetails(order)}
+                                       size="sm"
+                                       variant="outline"
+                                       className="border-blue-200 text-blue-600 hover:bg-blue-50"
+                                     >
+                                       <Eye className="h-4 w-4 mr-1" />
+                                       View Shipping
+                                     </Button>
+                                   )}
+                                   <Button
+                                     onClick={() => toggleOrderExpansion(order.id)}
+                                     size="sm"
+                                     variant="ghost"
+                                   >
+                                     {isExpanded ? (
+                                       <ChevronUp className="h-4 w-4" />
+                                     ) : (
+                                       <ChevronDown className="h-4 w-4" />
+                                     )}
+                                   </Button>
+                                 </div>
                               </div>
                             </div>
                           </div>
@@ -513,7 +557,8 @@ const UnifiedOrderManagement = () => {
             </Card>
           </TabsContent>
         </Tabs>
-                {/* Shipping Details Viewer Modal */}
+
+        {/* Shipping Details Viewer Modal */}
         {selectedOrder && (
           <ShippingDetailsViewer
             isOpen={shippingViewerOpen}

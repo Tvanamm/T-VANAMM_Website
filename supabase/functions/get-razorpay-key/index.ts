@@ -2,10 +2,11 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin":  "*",
-  "Access-Control-Allow-Headers": "*",          // allow any header
-  "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization,apikey,content-type,x-client-info,x-my-custom-header", // include all you use!
+  "Access-Control-Allow-Methods": "POST,OPTIONS,GET"
 };
+
 
 serve(async (req) => {
   // 1) CORS preflight

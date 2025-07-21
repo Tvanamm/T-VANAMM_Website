@@ -31,6 +31,7 @@ interface OrderDetails {
   shipping_address: string;
   franchise_member_id: string;
   order_items?: Array<{
+    item_id?: number;
     item_name: string;
     quantity: number;
     unit_price: number;
@@ -109,6 +110,44 @@ const Payment = () => {
         .single();
 
       if (error) throw error;
+      
+      // Check if order is already confirmed/paid
+      if (data.status === 'confirmed' || data.status === 'paid' || data.status === 'completed') {
+        // Check if payment transaction exists for this order
+        const { data: transaction } = await supabase
+          .from('payment_transactions')
+          .select('razorpay_payment_id, status')
+          .eq('order_id', orderId)
+          .eq('status', 'completed')
+          .single();
+
+        if (transaction) {
+          console.log('Order already paid, redirecting to success page');
+          navigate('/payment-success', {
+            state: {
+              orderId: orderId,
+              paymentId: transaction.razorpay_payment_id,
+              items: data.order_items?.map(item => ({
+                item: {
+                  id: item.item_id,
+                  name: item.item_name,
+                  price: item.unit_price,
+                  category: '',
+                  unit: '',
+                  gst_rate: 0
+                },
+                quantity: item.quantity
+              })) || [],
+              total: data.total_amount,
+              shippingAddress: data.shipping_address,
+              deliveryFee: data.delivery_fee_override || 0,
+              loyaltyPointsUsed: data.loyalty_points_used || 0
+            }
+          });
+          return;
+        }
+      }
+      
       setOrder(data);
     } catch (error) {
       console.error('Error fetching order:', error);
@@ -211,10 +250,21 @@ const Payment = () => {
           state: {
             orderId: order?.id,
             paymentId: 'loyalty_covered',
-            address: order?.shipping_address,
-            loyaltyPointsUsed: loyaltyPointsUsed,
-            loyaltyDiscount: loyaltyDiscount,
-            claimedGift: claimedGift
+            items: order?.order_items?.map(item => ({
+              item: {
+                id: item.item_id || '',
+                name: item.item_name,
+                price: item.unit_price,
+                category: '',
+                unit: '',
+                gst_rate: 0
+              },
+              quantity: item.quantity
+            })) || [],
+            total: order?.total_amount || 0,
+            shippingAddress: order?.shipping_address || '',
+            deliveryFee: order?.delivery_fee_override || 0,
+            loyaltyPointsUsed: loyaltyPointsUsed
           }
         });
         return;
@@ -243,10 +293,21 @@ const Payment = () => {
           state: {
             orderId: order?.id,
             paymentId: paymentData.razorpay_payment_id,
-            address: order?.shipping_address,
-            loyaltyPointsUsed: loyaltyPointsUsed,
-            loyaltyDiscount: loyaltyDiscount,
-            claimedGift: claimedGift
+            items: order?.order_items?.map(item => ({
+              item: {
+                id: item.item_id || '',
+                name: item.item_name,
+                price: item.unit_price,
+                category: '',
+                unit: '',
+                gst_rate: 0
+              },
+              quantity: item.quantity
+            })) || [],
+            total: order?.total_amount || 0,
+            shippingAddress: order?.shipping_address || '',
+            deliveryFee: order?.delivery_fee_override || 0,
+            loyaltyPointsUsed: loyaltyPointsUsed
           }
         });
       } else {

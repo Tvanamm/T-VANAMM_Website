@@ -10,7 +10,7 @@ interface CarouselSlide {
   description: string;
   image: string;
   buttonText: string;
-  linkTo: string;
+  linkTo: string; 
 }
 
 const slides: CarouselSlide[] = [

@@ -4,10 +4,12 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { crypto } from "https://deno.land/std@0.168.0/crypto/mod.ts";
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin":  "*",
-  "Access-Control-Allow-Headers": "*",
-  "Access-Control-Allow-Methods": "POST,OPTIONS",
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization,apikey,content-type,x-client-info,x-my-custom-header", // include all you use!
+  "Access-Control-Allow-Methods": "POST,OPTIONS,GET"
 };
+
+
 
 serve(async (req) => {
   // 1) Handle CORS preflight

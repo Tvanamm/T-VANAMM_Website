@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,6 +16,62 @@ import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import EnhancedRazorpayPayment from '@/components/franchise/EnhancedRazorpayPayment';
 
+interface CartItem {
+  id: number;
+  name: string;
+  price: number;
+  quantity: number;
+  unit: string;
+  gst_rate: number;
+  category: string;
+}
+
+interface CustomerInfo {
+  name?: string;
+  email?: string;
+  phone?: string;
+  tvanammId?: string;
+}
+
+interface CheckoutData {
+  items: {
+    id: string;
+    name: string;
+    price: number;
+    quantity: number;
+    unit: string;
+    gst_rate: number;
+    category: string;
+  }[];
+  totalAmount: number;
+  deliveryFee: number;
+  loyaltyPointsUsed: number;
+  shippingAddress: string;
+  customerInfo?: CustomerInfo;
+}
+
+interface OrderData extends CheckoutData {
+  paymentId: string;
+  paymentStatus: string;
+}
+
+interface RazorpayPaymentSuccessResponse {
+  razorpay_payment_id: string;
+  razorpay_order_id: string;
+  razorpay_signature: string;
+}
+
+interface RazorpayPaymentError {
+  error: {
+    code: string;
+    description: string;
+    source?: string;
+    step?: string;
+    reason?: string;
+    metadata?: any;
+  };
+}
+
 const EnhancedCheckoutPage = () => {
   const { cartItems, cartSummary, clearCart } = useFranchiseCart();
   const { franchiseProfile } = useRealFranchiseProfile();
@@ -25,17 +81,21 @@ const EnhancedCheckoutPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Payment state
   const [showPayment, setShowPayment] = useState(false);
-  const [orderData, setOrderData] = useState<any>(null);
+  const [checkoutData, setCheckoutData] = useState<CheckoutData | null>(null);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
-  // Find current user's franchise member record
-  const currentMember = franchiseMembers.find(member => 
+  const formattedCartSummary = useMemo(() => ({
+    subtotal: cartSummary.subtotal.toLocaleString(),
+    gst: cartSummary.gst.toLocaleString(),
+    loyaltyDiscount: cartSummary.loyaltyDiscount.toLocaleString(),
+    deliveryFee: cartSummary.deliveryFee === 0 ? 'Confirmation Required' : `₹${cartSummary.deliveryFee.toLocaleString()}`,
+    total: cartSummary.total.toLocaleString()
+  }), [cartSummary]);
+
+  const currentMember = franchiseMembers.find(member =>
     member.email === user?.email
   );
-
-  // Check if user has verified access
   const hasVerifiedAccess = currentMember && (currentMember.status === 'active' || currentMember.status === 'verified');
 
   const [shippingDetails, setShippingDetails] = useState({
@@ -47,7 +107,7 @@ const EnhancedCheckoutPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (cartItems.length === 0) {
       toast({
         title: "Cart Empty",
@@ -67,24 +127,34 @@ const EnhancedCheckoutPage = () => {
     }
 
     try {
-      const checkoutData = {
+      const data: CheckoutData = {
         items: cartItems.map(item => ({
-          id: item.id,
+          id: String(item.id),
           name: item.name,
           quantity: item.quantity,
           price: item.price,
           unit: item.unit,
-          gst_rate: item.gst_rate
+          gst_rate: item.gst_rate,
+          category: item.category
         })),
         totalAmount: cartSummary.total,
         deliveryFee: cartSummary.deliveryFee,
         loyaltyPointsUsed: cartSummary.loyaltyDiscount,
-        shippingAddress: `${shippingDetails.fullAddress}${shippingDetails.landmark ? ', ' + shippingDetails.landmark : ''}${shippingDetails.specialInstructions ? '. Special instructions: ' + shippingDetails.specialInstructions : ''}${orderNotes ? '. Order notes: ' + orderNotes : ''}`
+        shippingAddress: [
+          shippingDetails.fullAddress,
+          shippingDetails.landmark && `Landmark: ${shippingDetails.landmark}`,
+          shippingDetails.specialInstructions && `Instructions: ${shippingDetails.specialInstructions}`,
+          orderNotes && `Notes: ${orderNotes}`
+        ].filter(Boolean).join(' | '),
+        customerInfo: {
+          name: franchiseProfile?.name,
+          email: franchiseProfile?.email,
+          phone: franchiseProfile?.phone,
+          tvanammId: franchiseProfile?.tvanamm_id
+        }
       };
-
-      setOrderData(checkoutData);
+      setCheckoutData(data);
       setShowPayment(true);
-      
     } catch (error) {
       console.error('Checkout error:', error);
       toast({
@@ -95,59 +165,106 @@ const EnhancedCheckoutPage = () => {
     }
   };
 
-  const handlePaymentSuccess = async (response: any) => {
+  const handlePaymentSuccess = async (response: RazorpayPaymentSuccessResponse) => {
     setIsProcessingPayment(true);
     try {
-      // 1. First create the order in database
-      const orderResult = await createOrder({
-        ...orderData,
+      if (!checkoutData) {
+        throw new Error('Checkout data is missing');
+      }
+
+      const orderData: OrderData = {
+        ...checkoutData,
+        items: checkoutData.items.map(item => ({
+          ...item,
+          id: String(item.id)
+        })),
         paymentId: response.razorpay_payment_id,
         paymentStatus: 'completed'
-      });
+      };
+
+      const checkoutDataForOrder = {
+        ...orderData,
+        items: orderData.items.map(item => ({
+          ...item,
+          id: typeof item.id === 'string' ? Number(item.id) : item.id
+        }))
+      };
+
+      const orderResult = await createOrder(checkoutDataForOrder);
 
       if (!orderResult.success) {
         throw new Error('Order creation failed');
       }
 
-      // 2. Navigate to success page WITH all data
       navigate('/payment-success', {
         state: {
           orderId: orderResult.orderId,
           paymentId: response.razorpay_payment_id,
-          items: orderData.items,
-          total: orderData.totalAmount,
-          shippingAddress: orderData.shippingAddress,
-          deliveryFee: orderData.deliveryFee,
-          loyaltyPointsUsed: orderData.loyaltyPointsUsed
+          items: checkoutData.items.map(item => ({
+            item: {
+              id: item.id,
+              name: item.name,
+              price: item.price,
+              unit: item.unit,
+              category: item.category,
+              gst_rate: item.gst_rate
+            },
+            quantity: item.quantity
+          })),
+          total: checkoutData.totalAmount,
+          shippingAddress: checkoutData.shippingAddress,
+          deliveryFee: checkoutData.deliveryFee,
+          loyaltyPointsUsed: checkoutData.loyaltyPointsUsed,
+          customerName: franchiseProfile?.name,
+          orderDate: new Date().toISOString()
         }
       });
 
-      // 3. Only clear cart AFTER successful navigation
       clearCart();
-      
-    } catch (error) {
+
+    } catch (error: any) {
       console.error('Order creation error:', error);
       toast({
         title: "Order Failed",
-        description: "Payment was successful but order creation failed. Please contact support with your payment ID.",
-        variant: "destructive"
+        description: error.message || "Payment was successful but order creation failed. Please contact support.",
+        variant: "destructive",
+        action: (
+          <Button
+            variant="ghost"
+            onClick={() => navigate('/franchise-dashboard')}
+          >
+            Go to Dashboard
+          </Button>
+        )
       });
     } finally {
       setIsProcessingPayment(false);
     }
   };
 
-  const handlePaymentError = (error: any) => {
+  const handlePaymentError = (error: RazorpayPaymentError) => {
     console.error('Payment error:', error);
+    let errorMessage = "Payment could not be processed. Please try again.";
+
+    if (error.error) {
+      errorMessage = error.error.description ||
+        error.error.reason ||
+        errorMessage;
+    }
+
     toast({
       title: "Payment Failed",
-      description: error.error?.description || "Payment could not be processed. Please try again.",
-      variant: "destructive"
+      description: errorMessage,
+      variant: "destructive",
+      action: (
+        <Button variant="ghost" onClick={() => setShowPayment(false)}>
+          Try Again
+        </Button>
+      )
     });
     setShowPayment(false);
   };
 
-  // Show access denied if user doesn't have verified access
   if (!hasVerifiedAccess) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-teal-50 pt-20 px-4">
@@ -162,17 +279,17 @@ const EnhancedCheckoutPage = () => {
                   <div className="text-left">
                     <h3 className="font-semibold text-red-800 mb-2">Verification Required</h3>
                     <p className="text-red-700 mb-4">
-                      Your account must be verified before you can proceed to checkout. Please wait for the administrator to verify your franchise membership.
+                      Your account must be verified before you can proceed to checkout.
                     </p>
                     <div className="bg-white rounded-lg p-4 border border-red-200">
                       <h4 className="font-medium text-red-800 mb-2">Current Status:</h4>
                       <div className="flex items-center gap-2">
                         <Badge className={
-                          currentMember?.status === 'pending' 
-                            ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-100' 
+                          currentMember?.status === 'pending'
+                            ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-100'
                             : currentMember?.status === 'approved'
-                            ? 'bg-blue-100 text-blue-800 hover:bg-blue-100'
-                            : 'bg-red-100 text-red-800 hover:bg-red-100'
+                              ? 'bg-blue-100 text-blue-800 hover:bg-blue-100'
+                              : 'bg-red-100 text-red-800 hover:bg-red-100'
                         }>
                           {currentMember?.status || 'Unknown'}
                         </Badge>
@@ -180,16 +297,15 @@ const EnhancedCheckoutPage = () => {
                           {currentMember?.status === 'pending' && 'Awaiting admin review'}
                           {currentMember?.status === 'approved' && 'Approved, awaiting final verification'}
                           {currentMember?.status === 'rejected' && 'Application rejected'}
-                          {!currentMember?.status && 'Status unknown'}
                         </span>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
-              
+
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                <Button 
+                <Button
                   onClick={() => navigate('/order')}
                   variant="outline"
                   className="w-full sm:w-auto"
@@ -197,7 +313,7 @@ const EnhancedCheckoutPage = () => {
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   Back to Inventory
                 </Button>
-                <Button 
+                <Button
                   onClick={() => navigate('/franchise-dashboard')}
                   className="w-full sm:w-auto bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700"
                 >
@@ -230,33 +346,33 @@ const EnhancedCheckoutPage = () => {
     );
   }
 
-  if (showPayment && orderData) {
+  if (showPayment && checkoutData) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-teal-50 pt-20 px-4">
         <div className="max-w-md mx-auto">
           <EnhancedRazorpayPayment
             orderId={`ord_${Date.now()}`}
-            amount={orderData.totalAmount * 100} // convert to paise
+            amount={checkoutData.totalAmount * 100}
             orderDetails={{
               franchise_name: franchiseProfile?.name || 'Franchise Member',
-              shipping_address: orderData.shippingAddress,
-              items: orderData.items.map((item: any) => ({
+              shipping_address: checkoutData.shippingAddress,
+              items: checkoutData.items.map(item => ({
                 item_name: item.name,
                 quantity: item.quantity,
-                unit_price: item.price
+                unit_price: item.price,
               }))
             }}
             onPaymentSuccess={handlePaymentSuccess}
             onPaymentError={handlePaymentError}
           />
-          <Button 
+          <Button
             onClick={() => setShowPayment(false)}
             variant="outline"
             className="w-full mt-4"
             disabled={isProcessingPayment}
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            {isProcessingPayment ? 'Processing...' : 'Back to Order Review'}
+            {isProcessingPayment ? 'Processing Payment...' : 'Back to Order Review'}
           </Button>
         </div>
       </div>
@@ -266,7 +382,6 @@ const EnhancedCheckoutPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-teal-50 pt-20 px-4">
       <div className="max-w-4xl mx-auto">
-        {/* Header */}
         <div className="flex items-center gap-4 mb-6">
           <Button
             variant="ghost"
@@ -280,9 +395,7 @@ const EnhancedCheckoutPage = () => {
         </div>
 
         <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Order Items */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -294,13 +407,13 @@ const EnhancedCheckoutPage = () => {
                 {cartItems.map((item) => {
                   const itemTotal = item.price * item.quantity;
                   const itemGst = (itemTotal * item.gst_rate) / 100;
-                  
+
                   return (
                     <div key={item.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                       <div className="flex-1">
                         <h4 className="font-medium">{item.name}</h4>
                         <p className="text-sm text-gray-600">{item.category} • {item.unit}</p>
-                        <p className="text-sm text-gray-500">₹{item.price} × {item.quantity}</p>
+                        <p className="text-sm text-gray-500">₹{item.price.toLocaleString()} × {item.quantity}</p>
                       </div>
                       <div className="text-right">
                         <p className="font-semibold">₹{itemTotal.toLocaleString()}</p>
@@ -314,7 +427,6 @@ const EnhancedCheckoutPage = () => {
               </CardContent>
             </Card>
 
-            {/* Shipping Details */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -337,7 +449,6 @@ const EnhancedCheckoutPage = () => {
                     rows={3}
                   />
                 </div>
-                
                 <div>
                   <Label htmlFor="landmark">Landmark (Optional)</Label>
                   <Input
@@ -350,9 +461,8 @@ const EnhancedCheckoutPage = () => {
                     placeholder="Nearby landmark for easy identification"
                   />
                 </div>
-
                 <div>
-                  <Label htmlFor="specialInstructions">Special Delivery Instructions (Optional)</Label>
+                  <Label htmlFor="specialInstructions">Special Instructions (Optional)</Label>
                   <Textarea
                     id="specialInstructions"
                     value={shippingDetails.specialInstructions}
@@ -364,19 +474,16 @@ const EnhancedCheckoutPage = () => {
                     rows={2}
                   />
                 </div>
-
-                {/* Delivery Fee Notice */}
                 <div className="flex items-start gap-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                   <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
                   <div className="text-sm text-blue-800">
-                    <p className="font-medium mb-1">Delivery Fee Information</p>
-                    <p>Delivery fee will be confirmed after admin approval. Delivery fee may vary based on items, quantity, weight, distance, and other factors. Contact us for any inquiries about delivery charges.</p>
+                    <p className="font-medium mb-1">Delivery Information</p>
+                    <p>Delivery details will be confirmed after order placement. Contact us for any special requirements.</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Order Notes */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -395,7 +502,6 @@ const EnhancedCheckoutPage = () => {
             </Card>
           </div>
 
-          {/* Order Summary Sidebar */}
           <div className="lg:col-span-1">
             <Card className="sticky top-24">
               <CardHeader>
@@ -405,38 +511,33 @@ const EnhancedCheckoutPage = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {/* Pricing Breakdown */}
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
                     <span>Subtotal:</span>
-                    <span>₹{cartSummary.subtotal.toLocaleString()}</span>
+                    <span>₹{formattedCartSummary.subtotal}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span>GST (Per Item):</span>
-                    <span>₹{cartSummary.gst.toLocaleString()}</span>
+                    <span>GST:</span>
+                    <span>₹{formattedCartSummary.gst}</span>
                   </div>
                   {cartSummary.loyaltyDiscount > 0 && (
                     <div className="flex justify-between text-sm text-green-600">
                       <span>Loyalty Discount:</span>
-                      <span>-₹{cartSummary.loyaltyDiscount.toLocaleString()}</span>
+                      <span>-₹{formattedCartSummary.loyaltyDiscount}</span>
                     </div>
                   )}
                   <p className="text-sm text-red-600 whitespace-nowrap">
                     Delivery Fee:{' '}
                     <span className="font-medium">
-                      {cartSummary.deliveryFee === 0
-                        ? 'Confirmation Required'
-                        : `₹${cartSummary.deliveryFee}`}
+                      {formattedCartSummary.deliveryFee}
                     </span>
                   </p>
                   <Separator />
                   <div className="flex justify-between font-semibold text-lg">
                     <span>Total:</span>
-                    <span>₹{cartSummary.total.toLocaleString()}</span>
+                    <span>₹{formattedCartSummary.total}</span>
                   </div>
                 </div>
-
-                {/* Customer Info */}
                 <div className="border-t pt-4">
                   <h4 className="font-medium mb-2">Customer Information</h4>
                   <div className="text-sm space-y-1">
@@ -446,11 +547,9 @@ const EnhancedCheckoutPage = () => {
                     <p><strong>TVANAMM ID:</strong> {franchiseProfile?.tvanamm_id}</p>
                   </div>
                 </div>
-
-                {/* Submit Button */}
                 <Button
                   type="submit"
-                  className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700"
+                  className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 mt-4"
                   disabled={isCreatingOrder || !shippingDetails.fullAddress.trim()}
                 >
                   {isCreatingOrder ? (
@@ -462,9 +561,8 @@ const EnhancedCheckoutPage = () => {
                     'Proceed to Payment'
                   )}
                 </Button>
-
-                <p className="text-xs text-gray-500 text-center">
-                  You'll be redirected to a secure payment gateway to complete your order.
+                <p className="text-xs text-gray-500 text-center mt-2">
+                  You'll be redirected to Razorpay's secure payment gateway
                 </p>
               </CardContent>
             </Card>
